@@ -99,19 +99,6 @@ function avatarColor($name) { global $colors; return $colors[crc32($name) % coun
       </div>
     </div>
     <div class="admin-content">
-      <div class="flex justify-between items-center mb-6">
-        <div style="background: var(--card); padding: 16px; border-radius: 16px; font-size: 13px; color: var(--muted-foreground); border: 1px solid var(--border); box-shadow: var(--shadow-sm); width: 100%;">
-          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px; color:var(--foreground); font-weight:700;">
-            <span style="font-size:18px;">🔑</span> System Sample Accounts
-          </div>
-          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1rem;">
-            <div>Admin: <strong>admin</strong> / <strong>admin123</strong></div>
-            <div>Doctor: <strong>emily@medicare.com</strong> / <strong>doctor123</strong></div>
-            <div>Patient: <strong>alice@email.com</strong> / <strong>patient123</strong></div>
-          </div>
-        </div>
-      </div>
-
       <!-- Stat cards -->
       <div class="stat-grid">
         <div class="stat-card">
