@@ -33,6 +33,15 @@ function excerpt(?string $text, int $limit): string {
     return strlen($text) > $limit ? substr($text, 0, $limit - 3) . '...' : $text;
 }
 
+function writeReportSection($output, string $title, array $headers, array $rows): void {
+    fputcsv($output, []);
+    fputcsv($output, [$title]);
+    fputcsv($output, $headers);
+    foreach ($rows as $row) {
+        fputcsv($output, $row);
+    }
+}
+
 $totalPatients = scalarQuery($conn, "SELECT COUNT(*) AS c FROM patients");
 $totalDoctors = scalarQuery($conn, "SELECT COUNT(*) AS c FROM doctors");
 $totalDepartments = scalarQuery($conn, "SELECT COUNT(*) AS c FROM departments");
@@ -149,6 +158,89 @@ $monthlyRows = fetchRows($conn->query("
     ORDER BY month_key ASC
 "));
 $maxMonthlyAppointments = max(1, ...array_map(fn($row) => (int)$row['appointment_count'], $monthlyRows ?: [['appointment_count' => 1]]));
+
+if (isset($_GET['download']) && $_GET['download'] === 'csv') {
+    $filename = 'hospital-report-' . date('Y-m-d-His') . '.csv';
+
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
+    header('Pragma: no-cache');
+    header('Expires: 0');
+
+    $output = fopen('php://output', 'w');
+    fputcsv($output, ['MediCare HMS Manual Report']);
+    fputcsv($output, ['Generated at', date('M j, Y g:i A')]);
+
+    writeReportSection($output, 'Summary', ['Metric', 'Value'], [
+        ['Patients', $totalPatients],
+        ['Doctors', $totalDoctors],
+        ['Departments', $totalDepartments],
+        ['Appointments', $totalAppointments],
+        ['Appointments today', $appointmentsToday],
+        ['Pending appointments', $pendingAppointments],
+        ['Completed appointments', $completedAppointments],
+        ['Records this month', $recordsThisMonth],
+        ['Record coverage', $recordCoverage . '%'],
+    ]);
+
+    writeReportSection($output, 'Appointment Status Mix', ['Status', 'Total'], array_map(fn($row) => [
+        $row['status'],
+        (int)$row['total'],
+    ], $statusRows));
+
+    writeReportSection($output, 'Monthly Appointment Trend', ['Month', 'Total', 'Completed', 'Cancelled'], array_map(fn($row) => [
+        $row['month_label'],
+        (int)$row['appointment_count'],
+        (int)$row['completed_count'],
+        (int)$row['cancelled_count'],
+    ], $monthlyRows));
+
+    writeReportSection($output, 'Department Workload', ['Department', 'Doctors', 'Appointments', 'Completed', 'Pending'], array_map(fn($row) => [
+        $row['dept_name'],
+        (int)$row['doctor_count'],
+        (int)$row['appointment_count'],
+        (int)$row['completed_count'],
+        (int)$row['pending_count'],
+    ], $departmentRows));
+
+    writeReportSection($output, 'Top Doctors This Month', ['Doctor', 'Department', 'Specialization', 'Total', 'Completed', 'Cancelled', 'Latest Appointment'], array_map(fn($row) => [
+        $row['doctor_name'],
+        $row['dept_name'],
+        $row['specialization'],
+        (int)$row['appointment_count'],
+        (int)$row['completed_count'],
+        (int)$row['cancelled_count'],
+        $row['latest_appointment'] ? date('M j, Y', strtotime($row['latest_appointment'])) : 'None',
+    ], $topDoctorRows));
+
+    writeReportSection($output, 'Patient Record Gaps', ['Patient', 'Email', 'Contact', 'Appointments', 'Records', 'Last Visit'], array_map(fn($row) => [
+        $row['patient_name'],
+        $row['email'],
+        $row['contact'],
+        (int)$row['appointment_count'],
+        (int)$row['record_count'],
+        $row['latest_appointment'] ? date('M j, Y', strtotime($row['latest_appointment'])) : 'No visit',
+    ], $patientCoverageRows));
+
+    writeReportSection($output, 'Doctors Without Bookings', ['Doctor', 'Department', 'Specialization', 'Schedule'], array_map(fn($row) => [
+        $row['doctor_name'],
+        $row['dept_name'],
+        $row['specialization'],
+        $row['schedule'] ?: 'Not set',
+    ], $idleDoctorRows));
+
+    writeReportSection($output, 'Recent Medical Records', ['Date', 'Patient', 'Doctor', 'Department', 'Diagnosis', 'Prescription'], array_map(fn($row) => [
+        date('M j, Y', strtotime($row['record_date'])),
+        $row['patient_name'],
+        $row['doctor_name'],
+        $row['dept_name'],
+        $row['diagnosis'],
+        $row['prescription'],
+    ], $recentRecordRows));
+
+    fclose($output);
+    exit;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -175,7 +267,8 @@ $maxMonthlyAppointments = max(1, ...array_map(fn($row) => (int)$row['appointment
             <h3>Manual report generated</h3>
             <span class="pill pill-green"><?= date('M j, Y g:i A') ?></span>
           </div>
-          <p class="text-muted text-sm" style="margin:0;">This report is built from the latest patient records, appointments, doctors, and department data.</p>
+          <p class="text-muted text-sm" style="margin:0 0 1rem;">This report is built from the latest patient records, appointments, doctors, and department data.</p>
+          <a href="reports.php?download=csv" class="btn btn-primary btn-sm">Download CSV</a>
         </div>
       <?php endif; ?>
 

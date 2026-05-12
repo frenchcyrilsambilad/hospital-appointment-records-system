@@ -190,7 +190,7 @@ function avatarColor($name) { global $colors; return $colors[crc32($name) % coun
                         <div class="text-muted text-sm"><?= htmlspecialchars($nextReportText) ?></div>
                     </div>
                 </div>
-                <a href="reports.php?manual=1" class="btn btn-primary" style="width:100%; margin-top: 2.5rem;">Generate Manual Report</a>
+                <a href="reports.php?download=csv" class="btn btn-primary" style="width:100%; margin-top: 2.5rem;">Generate Manual Report</a>
             </div>
         </div>
       </div>
