@@ -11,6 +11,11 @@ $apptToday = $conn->query("SELECT COUNT(*) as c FROM appointments WHERE DATE(app
 $pendingReview = $conn->query("SELECT COUNT(*) as c FROM appointments WHERE status = 'Pending'")->fetch_assoc()['c'];
 
 $activeDoctors = $conn->query("SELECT COUNT(*) as c FROM doctors")->fetch_assoc()['c'];
+$recordsThisMonth = $conn->query("
+    SELECT COUNT(*) as c
+    FROM medical_records
+    WHERE record_date >= DATE_FORMAT(CURDATE(), '%Y-%m-01')
+")->fetch_assoc()['c'];
 
 // Recent appointments
 $recentAppts = $conn->query("
@@ -175,22 +180,47 @@ function avatarColor($name) { global $colors; return $colors[crc32($name) % coun
           <a href="appointments.php" class="btn btn-ghost btn-sm" style="width:100%; margin-top:1rem">View All Appointments</a>
         </div>
 
-        <div class="card-featured">
+        <div class="card-featured report-widget">
             <div class="card-inner">
-                <div class="section-label">
-                    <span class="dot"></span>
-                    <span class="text">System Notice</span>
-                </div>
-                <h3 style="color:var(--foreground)">Daily Hospital Report</h3>
-                <p class="text-muted" style="margin: 1rem 0;">The system automatically summarizes patient records and appointment outcomes every 24 hours.</p>
-                <div class="flex items-center gap-4" style="margin-top: 2rem;">
-                    <div class="avatar-md" style="background: var(--muted); color: var(--accent);">📊</div>
+                <div class="report-widget-top">
                     <div>
-                        <div style="font-weight:700; font-size:14px;">Next update in:</div>
-                        <div class="text-muted text-sm"><?= htmlspecialchars($nextReportText) ?></div>
+                        <div class="section-label report-label">
+                            <span class="dot"></span>
+                            <span class="text">System Notice</span>
+                        </div>
+                        <h3>Daily Hospital Report</h3>
+                    </div>
+                    <span class="pill pill-green">Ready</span>
+                </div>
+
+                <p class="text-muted report-copy">Download the latest operational summary for patient records, appointment outcomes, doctor workload, and department activity.</p>
+
+                <div class="report-metrics">
+                    <div>
+                        <span class="report-metric-value"><?= $totalAppointments ?></span>
+                        <span class="report-metric-label">Appointments</span>
+                    </div>
+                    <div>
+                        <span class="report-metric-value"><?= $recordsThisMonth ?></span>
+                        <span class="report-metric-label">Records this month</span>
                     </div>
                 </div>
-                <a href="reports.php?download=csv" class="btn btn-primary" style="width:100%; margin-top: 2.5rem;">Generate Manual Report</a>
+
+                <div class="report-schedule">
+                    <div class="report-icon" aria-hidden="true">&#128197;</div>
+                    <div>
+                        <div class="report-schedule-label">Next automatic update</div>
+                        <div class="report-schedule-time"><?= htmlspecialchars($nextReportText) ?></div>
+                    </div>
+                </div>
+
+                <div class="report-actions">
+                    <a href="reports.php?download=csv" class="btn btn-primary">
+                        <span aria-hidden="true">&#128229;</span>
+                        Download CSV Report
+                    </a>
+                    <a href="reports.php" class="btn btn-ghost btn-sm">View reports</a>
+                </div>
             </div>
         </div>
       </div>
