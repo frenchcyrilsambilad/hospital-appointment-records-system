@@ -116,6 +116,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 // Counts for hero stats
 $totalPatients = $conn->query("SELECT COUNT(*) as c FROM patients")->fetch_assoc()['c'];
 $totalDoctors = $conn->query("SELECT COUNT(*) as c FROM doctors")->fetch_assoc()['c'];
+$totalAppointments = $conn->query("SELECT COUNT(*) as c FROM appointments")->fetch_assoc()['c'];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -132,27 +133,38 @@ $totalDoctors = $conn->query("SELECT COUNT(*) as c FROM doctors")->fetch_assoc()
   <!-- Left panel -->
   <div class="login-left">
     <div class="logo">
-      <div class="logo-icon">
-        <svg width="16" height="16" fill="none" viewBox="0 0 16 16"><path d="M8 1v14M1 8h14" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
-      </div>
-      MediCare HMS
+      <div class="logo-icon">+</div>
+      <span>MediCare HMS</span>
     </div>
     <div class="login-hero animate-fade-in-up">
-      <h1>Healthcare <span class="gradient-text">made simple.</span></h1>
-      <p>Streamlined appointment booking, patient records, and departmental management — all in one secure platform.</p>
+      <div class="login-kicker">Hospital operations portal</div>
+      <h1>Care coordination, without the paperwork drag.</h1>
+      <p>Manage appointments, patient profiles, medical records, doctors, and department reports from one focused workspace.</p>
     </div>
-    <div style="display:flex; gap: 3rem; margin-top: 3rem; animation: fadeInUp 0.7s forwards; animation-delay: 0.2s; opacity: 0;">
-      <div><div style="font-family:'Calistoga',serif; font-size:2.5rem; line-height:1; color:var(--foreground);"><?= $totalPatients ?></div><div style="font-size:13px; color:var(--muted-foreground); font-weight:500;">Total patients</div></div>
-      <div><div style="font-family:'Calistoga',serif; font-size:2.5rem; line-height:1; color:var(--foreground);"><?= $totalDoctors ?></div><div style="font-size:13px; color:var(--muted-foreground); font-weight:500;">Doctors</div></div>
-      <div><div style="font-family:'Calistoga',serif; font-size:2.5rem; line-height:1; color:var(--foreground);">99.9%</div><div style="font-size:13px; color:var(--muted-foreground); font-weight:500;">Uptime</div></div>
+    <div class="login-stats">
+      <div>
+        <span class="login-stat-value"><?= $totalPatients ?></span>
+        <span class="login-stat-label">Patients</span>
+      </div>
+      <div>
+        <span class="login-stat-value"><?= $totalDoctors ?></span>
+        <span class="login-stat-label">Doctors</span>
+      </div>
+      <div>
+        <span class="login-stat-value"><?= $totalAppointments ?></span>
+        <span class="login-stat-label">Appointments</span>
+      </div>
     </div>
   </div>
 
   <!-- Right panel -->
   <div class="login-right">
     <div class="login-form" id="loginFormWrap" style="<?= $mode === 'register' ? 'display:none' : '' ?>">
-      <h2>Welcome back</h2>
-      <p class="sub">Sign in to your account</p>
+      <div class="auth-card-head">
+        <span class="pill pill-blue">Secure access</span>
+        <h2>Welcome back</h2>
+        <p class="sub">Sign in with your hospital account.</p>
+      </div>
 
 
       <?php if ($error && $mode === 'login'): ?>
@@ -182,7 +194,10 @@ $totalDoctors = $conn->query("SELECT COUNT(*) as c FROM doctors")->fetch_assoc()
         </div>
         <div class="form-group">
           <label>Password</label>
-          <input type="password" name="password" class="form-input" placeholder="Enter your password" required>
+          <div class="password-field">
+            <input type="password" name="password" class="form-input" placeholder="Enter your password" required>
+            <button type="button" class="password-toggle" aria-label="Show password" aria-pressed="false" onclick="togglePassword(this)">&#128065;</button>
+          </div>
         </div>
         <button type="submit" class="btn btn-primary">Sign in</button>
       </form>
@@ -190,8 +205,11 @@ $totalDoctors = $conn->query("SELECT COUNT(*) as c FROM doctors")->fetch_assoc()
     </div>
 
     <div class="login-form" id="registerFormWrap" style="<?= $mode === 'register' ? '' : 'display:none' ?>">
-      <h2>Create account</h2>
-      <p class="sub">Register as a new patient</p>
+      <div class="auth-card-head">
+        <span class="pill pill-green">Patient registration</span>
+        <h2>Create account</h2>
+        <p class="sub">Register as a new patient and book appointments.</p>
+      </div>
 
       <?php if ($error && $mode === 'register'): ?>
       <script>
@@ -215,7 +233,10 @@ $totalDoctors = $conn->query("SELECT COUNT(*) as c FROM doctors")->fetch_assoc()
         </div>
         <div class="form-group">
           <label>Password</label>
-          <input type="password" name="password" class="form-input" placeholder="Min. 6 characters" required minlength="6">
+          <div class="password-field">
+            <input type="password" name="password" class="form-input" placeholder="Min. 6 characters" required minlength="6">
+            <button type="button" class="password-toggle" aria-label="Show password" aria-pressed="false" onclick="togglePassword(this)">&#128065;</button>
+          </div>
         </div>
         <div style="display:flex;gap:10px">
           <div class="form-group" style="flex:1">
@@ -247,6 +268,17 @@ $totalDoctors = $conn->query("SELECT COUNT(*) as c FROM doctors")->fetch_assoc()
 function toggleMode(mode) {
   document.getElementById('loginFormWrap').style.display = mode === 'login' ? '' : 'none';
   document.getElementById('registerFormWrap').style.display = mode === 'register' ? '' : 'none';
+}
+
+function togglePassword(button) {
+  const field = button.closest('.password-field');
+  const input = field.querySelector('input');
+  const isHidden = input.type === 'password';
+
+  input.type = isHidden ? 'text' : 'password';
+  button.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+  button.setAttribute('aria-pressed', isHidden ? 'true' : 'false');
+  button.classList.toggle('active', isHidden);
 }
 </script>
 </body>
