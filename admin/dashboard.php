@@ -7,6 +7,7 @@ $totalPatients = $conn->query("SELECT COUNT(*) as c FROM patients")->fetch_assoc
 $newPatientsWeek = $conn->query("SELECT COUNT(*) as c FROM patients p JOIN users u ON p.user_id=u.user_id WHERE u.created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)")->fetch_assoc()['c'];
 
 $apptToday = $conn->query("SELECT COUNT(*) as c FROM appointments WHERE DATE(appt_date) = CURDATE()")->fetch_assoc()['c'];
+$totalAppointments = $conn->query("SELECT COUNT(*) as c FROM appointments")->fetch_assoc()['c'];
 
 $pendingReview = $conn->query("SELECT COUNT(*) as c FROM appointments WHERE status = 'Pending'")->fetch_assoc()['c'];
 
