@@ -56,6 +56,10 @@ while ($row = $statusQuery->fetch_assoc()) {
 }
 
 $pendingBadge = $pendingReview;
+$now = new DateTimeImmutable();
+$nextReportAt = $now->modify('tomorrow')->setTime(0, 0);
+$nextReportDiff = $now->diff($nextReportAt);
+$nextReportText = sprintf('%02d hours %02d minutes', ($nextReportDiff->days * 24) + $nextReportDiff->h, $nextReportDiff->i);
 
 function statusPill($s) {
     $map = ['Confirmed'=>'green','Pending'=>'amber','Completed'=>'blue','Cancelled'=>'red'];
@@ -183,10 +187,10 @@ function avatarColor($name) { global $colors; return $colors[crc32($name) % coun
                     <div class="avatar-md" style="background: var(--muted); color: var(--accent);">📊</div>
                     <div>
                         <div style="font-weight:700; font-size:14px;">Next update in:</div>
-                        <div class="text-muted text-sm">04 hours 22 minutes</div>
+                        <div class="text-muted text-sm"><?= htmlspecialchars($nextReportText) ?></div>
                     </div>
                 </div>
-                <button class="btn btn-primary" style="width:100%; margin-top: 2.5rem;">Generate Manual Report</button>
+                <a href="reports.php?manual=1" class="btn btn-primary" style="width:100%; margin-top: 2.5rem;">Generate Manual Report</a>
             </div>
         </div>
       </div>
@@ -275,4 +279,3 @@ new Chart(statusCtx, {
 </script>
 </body>
 </html>
-

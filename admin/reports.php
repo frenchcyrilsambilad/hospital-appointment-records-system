@@ -169,6 +169,15 @@ $maxMonthlyAppointments = max(1, ...array_map(fn($row) => (int)$row['appointment
       </div>
     </div>
     <div class="admin-content reports-content">
+      <?php if (isset($_GET['manual'])): ?>
+        <div class="card report-card" style="border-left:4px solid var(--accent);">
+          <div class="card-head">
+            <h3>Manual report generated</h3>
+            <span class="pill pill-green"><?= date('M j, Y g:i A') ?></span>
+          </div>
+          <p class="text-muted text-sm" style="margin:0;">This report is built from the latest patient records, appointments, doctors, and department data.</p>
+        </div>
+      <?php endif; ?>
 
       <div class="stat-grid">
         <div class="stat-card">
